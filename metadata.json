@@ -1,0 +1,6 @@
+{
+  "name": "NEXUS AGÊNCIA - Gestão Financeira e Comercial",
+  "description": "Sistema completo e moderno de Gestão Financeira e Comercial com dashboard em tempo real, DRE, fluxo de caixa, controle de estoque, vendas, CRM de clientes, fornecedores, agendamentos, metas e relatórios executivos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
