@@ -187,23 +187,43 @@ export const DashboardView: React.FC = () => {
       .filter((t) => t.type === type && t.status === 'Pago' && t.date.startsWith(monthKey))
       .reduce((acc, t) => acc + t.amount, 0);
 
+  const sumPaidInRange = (type: 'Entrada' | 'Saída', start: string, end: string) =>
+    transactions
+      .filter((t) => t.type === type && t.status === 'Pago' && t.date >= start && t.date <= end)
+      .reduce((acc, t) => acc + t.amount, 0);
+
   // --- Financial KPIs -----------------------------------------------------
   const totalBalance = bankAccounts.reduce((acc, b) => acc + b.balance, 0);
 
+  const periodIncome = sumPaidInRange('Entrada', filteredDateRange.startDate, filteredDateRange.endDate);
+  const periodExpenses = sumPaidInRange('Saída', filteredDateRange.startDate, filteredDateRange.endDate);
+  const periodNet = periodIncome - periodExpenses;
+  const periodProfitMargin = periodIncome > 0 ? (periodNet / periodIncome) * 100 : 0;
+
+  const rangeDays = Math.max(
+    1,
+    Math.round((new Date(filteredDateRange.endDate + 'T00:00:00').getTime() - new Date(filteredDateRange.startDate + 'T00:00:00').getTime()) / 86400000) +
+      1
+  );
+  const prevPeriodStart = new Date(filteredDateRange.startDate + 'T00:00:00');
+  prevPeriodStart.setDate(prevPeriodStart.getDate() - rangeDays);
+  const prevPeriodEnd = new Date(filteredDateRange.startDate + 'T00:00:00');
+  prevPeriodEnd.setDate(prevPeriodEnd.getDate() - 1);
+  const prevStartStr = prevPeriodStart.toISOString().split('T')[0];
+  const prevEndStr = prevPeriodEnd.toISOString().split('T')[0];
+  const prevPeriodIncome = sumPaidInRange('Entrada', prevStartStr, prevEndStr);
+  const prevPeriodExpenses = sumPaidInRange('Saída', prevStartStr, prevEndStr);
+  const periodRevenueGrowth = prevPeriodIncome > 0 ? ((periodIncome - prevPeriodIncome) / prevPeriodIncome) * 100 : null;
+  const periodExpenseVariation = prevPeriodExpenses > 0 ? ((periodExpenses - prevPeriodExpenses) / prevPeriodExpenses) * 100 : null;
+
   const monthIncome = sumPaidByMonth('Entrada', currentMonthKey);
   const monthExpenses = sumPaidByMonth('Saída', currentMonthKey);
-  const prevIncome = sumPaidByMonth('Entrada', prevMonthKey);
-  const prevExpenses = sumPaidByMonth('Saída', prevMonthKey);
 
   const netProfit = monthIncome - monthExpenses;
-  const profitMargin = monthIncome > 0 ? (netProfit / monthIncome) * 100 : 0;
 
   const monthNetFlow = monthIncome - monthExpenses;
   const balanceAtStartOfMonth = totalBalance - monthNetFlow;
   const balanceVariation = balanceAtStartOfMonth !== 0 ? (monthNetFlow / balanceAtStartOfMonth) * 100 : null;
-
-  const revenueGrowth = prevIncome > 0 ? ((monthIncome - prevIncome) / prevIncome) * 100 : null;
-  const expenseVariation = prevExpenses > 0 ? ((monthExpenses - prevExpenses) / prevExpenses) * 100 : null;
 
   // --- Operational KPIs ---------------------------------------------------
   const totalSalesCount = rangeSales.length;
@@ -226,9 +246,6 @@ export const DashboardView: React.FC = () => {
     .map((t) => t.date)
     .sort()
     .find((d) => d >= todayStr);
-
-  const cashFlow = monthNetFlow;
-  const cashFlowPositive = cashFlow >= 0;
 
   // --- Pró-Labore ---------------------------------------------------------
   const expectedProLabore = computeProLaboreAmount(currentMonthKey);
@@ -345,7 +362,7 @@ export const DashboardView: React.FC = () => {
     monthIncome,
     monthProfit: netProfit,
     prev3MonthsAvgProfit,
-    monthNetFlow: cashFlow,
+    monthNetFlow,
     proLaboreAmount: expectedProLabore,
     proLaborePaid,
     proLaboreMode: proLaboreConfig.mode,
@@ -626,31 +643,31 @@ export const DashboardView: React.FC = () => {
             }
           />
 
-          {/* 2. Faturamento do Mês */}
+          {/* 2. Faturamento do Período */}
           <KpiCard
-            title="Faturamento do Mês"
-            value={formatBRL(monthIncome)}
+            title="Faturamento no Período"
+            value={formatBRL(periodIncome)}
             valueClass="text-emerald-400"
             icon={<TrendingUp className="w-5 h-5" />}
             accent="bg-emerald-500/10 text-emerald-400"
             footer={
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <VariationBadge value={revenueGrowth} label=" vs mês anterior" />
+                <VariationBadge value={periodRevenueGrowth} label=" vs período anterior" />
                 <span className="text-[11px] text-gray-500">Entradas Confirmadas</span>
               </div>
             }
           />
 
-          {/* 3. Despesas do Mês */}
+          {/* 3. Despesas do Período */}
           <KpiCard
-            title="Despesas do Mês"
-            value={formatBRL(monthExpenses)}
+            title="Despesas no Período"
+            value={formatBRL(periodExpenses)}
             valueClass="text-rose-400"
             icon={<TrendingDown className="w-5 h-5" />}
             accent="bg-rose-500/10 text-rose-400"
             footer={
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <VariationBadge value={expenseVariation} label=" vs mês anterior" invert />
+                <VariationBadge value={periodExpenseVariation} label=" vs período anterior" invert />
                 <span className="text-[11px] text-gray-500">Custos Operacionais</span>
               </div>
             }
@@ -658,9 +675,9 @@ export const DashboardView: React.FC = () => {
 
           {/* 4. Líquido */}
           <KpiCard
-            title="Líquido"
-            value={formatBRL(netProfit)}
-            valueClass={netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}
+            title="Líquido no Período"
+            value={formatBRL(periodNet)}
+            valueClass={periodNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}
             icon={<Coins className="w-5 h-5" />}
             accent="bg-purple-500/10 text-purple-400"
             footer={
@@ -668,10 +685,10 @@ export const DashboardView: React.FC = () => {
                 <span className="text-[11px] text-gray-500">Faturamento − Despesas</span>
                 <span
                   className={`text-xs font-bold px-2 py-0.5 rounded-md ${
-                    profitMargin >= 0 ? 'text-emerald-300 bg-emerald-500/10' : 'text-rose-300 bg-rose-500/10'
+                    periodProfitMargin >= 0 ? 'text-emerald-300 bg-emerald-500/10' : 'text-rose-300 bg-rose-500/10'
                   }`}
                 >
-                  Margem {profitMargin.toFixed(1)}%
+                  Margem {periodProfitMargin.toFixed(1)}%
                 </span>
               </div>
             }
@@ -782,18 +799,18 @@ export const DashboardView: React.FC = () => {
           {/* 11. Fluxo de Caixa */}
           <OperationCard
             title="Fluxo de Caixa"
-            mainValue={formatBRL(cashFlow)}
-            mainClass={cashFlowPositive ? 'text-emerald-400' : 'text-rose-400'}
+            mainValue={formatBRL(periodNet)}
+            mainClass={periodNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}
             icon={<ArrowLeftRight className="w-4 h-4" />}
             accent="bg-cyan-500/10 text-cyan-400"
             onClick={() => setActiveTab('accounts')}
             subs={[
               {
                 label: 'Resultado',
-                value: cashFlowPositive ? 'Positivo' : 'Negativo',
-                className: cashFlowPositive ? 'text-emerald-400' : 'text-rose-400',
+                value: periodNet >= 0 ? 'Positivo' : 'Negativo',
+                className: periodNet >= 0 ? 'text-emerald-400' : 'text-rose-400',
               },
-              { label: 'Entradas − Saídas', value: formatBRL(monthIncome) + ' − ' + formatBRL(monthExpenses) },
+              { label: 'Entradas − Saídas', value: formatBRL(periodIncome) + ' − ' + formatBRL(periodExpenses) },
             ]}
           />
         </div>
@@ -856,11 +873,11 @@ export const DashboardView: React.FC = () => {
           {/* 15. Margem de Líquido */}
           <KpiCard
             title="Margem de Líquido"
-            value={`${profitMargin.toFixed(1)}%`}
-            valueClass={profitMargin >= 0 ? 'text-emerald-400' : 'text-rose-400'}
+            value={`${periodProfitMargin.toFixed(1)}%`}
+            valueClass={periodProfitMargin >= 0 ? 'text-emerald-400' : 'text-rose-400'}
             icon={<Percent className="w-4 h-4" />}
             accent="bg-emerald-500/10 text-emerald-400"
-            footer={<span className="text-[11px] text-gray-500">Líquido / Faturamento do mês</span>}
+            footer={<span className="text-[11px] text-gray-500">Líquido / Faturamento do período</span>}
           />
 
           {/* 16. Meta Mensal */}

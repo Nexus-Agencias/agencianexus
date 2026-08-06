@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useERP } from '../../context/ERPContext';
 import {
   Search,
+  Menu,
   Bell,
   CheckCheck,
   Building2,
@@ -21,7 +22,7 @@ interface HeaderProps {
   onToggleMobileMenu?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = () => {
+export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
   const {
     companyConfig,
     currentUser,
@@ -52,27 +53,34 @@ export const Header: React.FC<HeaderProps> = () => {
   return (
     <header className="sticky top-0 z-30 h-16 bg-[#0D1117]/90 backdrop-blur-md border-b border-gray-800/80 px-4 lg:px-8 flex items-center justify-between gap-4">
       {/* Left: Global Search trigger */}
-      <div className="flex items-center gap-3 flex-1 max-w-md">
+      <div className="flex items-center gap-2.5 flex-1 min-w-0">
+        {/* Mobile Menu Toggle */}
+        <button
+          onClick={onToggleMobileMenu}
+          className="lg:hidden p-2 text-gray-400 hover:text-white bg-[#161B22] border border-gray-800 rounded-xl transition-colors hover:bg-gray-800/50 shrink-0"
+          aria-label="Abrir menu"
+        >
+          <Menu className="w-4 h-4" />
+        </button>
+
         <button
           onClick={() => setIsCommandOpen(true)}
           className="w-full flex items-center justify-between px-3.5 py-2 bg-[#161B22] border border-gray-800/90 hover:border-purple-500/50 rounded-xl text-xs text-gray-400 hover:text-gray-200 transition-all shadow-inner group"
         >
-          <div className="flex items-center gap-2">
-            <Search className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
-            <span>Buscar clientes, produtos, vendas (Ctrl + K)...</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <Search className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform shrink-0" />
+            <span className="truncate">Buscar clientes, produtos, vendas (Ctrl + K)...</span>
           </div>
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 bg-[#0D1117] border border-gray-700/60 rounded-md">
+          <kbd className="hidden md:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 bg-[#0D1117] border border-gray-700/60 rounded-md shrink-0">
             ⌘K
           </kbd>
         </button>
       </div>
 
       {/* Right controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Date Filter */}
-        <div className="hidden md:block">
-          <DateFilterSelect />
-        </div>
+        <DateFilterSelect />
 
         {/* Quick Action */}
         <button

@@ -22,9 +22,15 @@ import {
   Wallet,
   PieChart,
   HeartPulse,
+  X,
 } from 'lucide-react';
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onClose }) => {
   const { activeTab, setActiveTab, companyConfig, products, notifications, logout } = useERP();
 
   // Calculate low stock alert badge count
@@ -50,8 +56,8 @@ export const Sidebar: React.FC = () => {
     { id: 'profile', label: 'Perfil', icon: User },
   ];
 
-  return (
-    <aside className="w-64 bg-[#0D1117] border-r border-gray-800/80 h-screen sticky top-0 flex flex-col justify-between select-none z-40 shrink-0">
+  const renderNav = () => (
+    <>
       <div>
         {/* Company Header */}
         <div className="p-5 border-b border-gray-800/80 flex items-center gap-3">
@@ -81,7 +87,10 @@ export const Sidebar: React.FC = () => {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  onClose?.();
+                }}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all group ${
                   isActive
                     ? 'bg-purple-600 text-white font-semibold shadow-lg shadow-purple-900/25'
@@ -120,13 +129,42 @@ export const Sidebar: React.FC = () => {
       {/* Footer / Logout */}
       <div className="p-3 border-t border-gray-800/80 bg-[#0D1117]">
         <button
-          onClick={logout}
+          onClick={() => {
+            logout();
+            onClose?.();
+          }}
           className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
         >
           <LogOut className="w-4 h-4" />
           <span>Sair do Sistema</span>
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex w-64 bg-[#0D1117] border-r border-gray-800/80 h-screen sticky top-0 flex-col justify-between select-none z-40 shrink-0">
+        {renderNav()}
+      </aside>
+
+      {/* Mobile Drawer */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={onClose} />
+          <aside className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-[#0D1117] border-r border-gray-800 flex flex-col justify-between select-none shadow-2xl">
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-white bg-[#161B22] border border-gray-800 rounded-lg transition-colors z-10"
+              aria-label="Fechar menu"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            {renderNav()}
+          </aside>
+        </div>
+      )}
+    </>
   );
 };

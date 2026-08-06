@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ERPProvider, useERP } from './context/ERPContext';
 import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
@@ -26,6 +26,7 @@ import { HealthView } from './components/views/HealthView';
 
 const MainLayout: React.FC = () => {
   const { currentUser, activeTab, cloudEnabled, cloudStatus } = useERP();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (cloudEnabled && cloudStatus === 'connecting' && !currentUser) {
     return (
@@ -85,10 +86,10 @@ const MainLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0D1117] text-gray-100 font-sans antialiased flex flex-col">
-      <Header />
+      <Header onToggleMobileMenu={() => setMobileMenuOpen(true)} />
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+        <Sidebar mobileOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
         <main className="flex-1 overflow-y-auto pb-16">{renderActiveView()}</main>
       </div>
 
