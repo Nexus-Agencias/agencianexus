@@ -382,13 +382,86 @@ export const DashboardView: React.FC = () => {
   };
 
   // --- Charts -------------------------------------------------------------
-  const chartData = Array.from({ length: 8 }, (_, i) => {
-    const d = new Date(refYearFull, refMonthZero - (7 - i), 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    const income = sumPaidByMonth('Entrada', key);
-    const expenses = sumPaidByMonth('Saída', key);
-    return { name: MONTHS[d.getMonth()], Receitas: income, Despesas: expenses, Líquido: income - expenses, Meta: goalTargetForMonth(key) };
-  });
+  const rangeStartStr = filteredDateRange.startDate;
+  const rangeEndStr = filteredDateRange.endDate;
+
+  const bucketMode: 'day' | 'week' | 'month' = rangeDays <= 31 ? 'day' : rangeDays <= 120 ? 'week' : 'month';
+
+  const toDateKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const formatKeyDate = (key: string) => {
+    const [, m, d] = key.split('-');
+    return `${d}/${m}/${key.slice(0, 4)}`;
+  };
+
+  const tickFormat = (val: number) =>
+    Math.abs(val) >= 1000 ? `R$${val / 1000}k` : `R$${val}`;
+
+  const chartData = (() => {
+    const data: { name: string; fullKey: string; Receitas: number; Despesas: number; Líquido: number; Meta?: number }[] = [];
+
+    if (bucketMode === 'day') {
+      const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      const cursor = new Date(Number(rangeStartStr.slice(0, 4)), Number(rangeStartStr.slice(5, 7)) - 1, Number(rangeStartStr.slice(8, 10)));
+      const end = new Date(Number(rangeEndStr.slice(0, 4)), Number(rangeEndStr.slice(5, 7)) - 1, Number(rangeEndStr.slice(8, 10)));
+      while (cursor <= end) {
+        const key = toDateKey(cursor);
+        const income = sumPaidInRange('Entrada', key, key);
+        const expenses = sumPaidInRange('Saída', key, key);
+        const name =
+          rangeDays === 1
+            ? key === todayStr
+              ? 'Hoje'
+              : 'Ontem'
+            : rangeDays <= 7
+            ? WEEKDAYS[cursor.getDay()]
+            : `${String(cursor.getDate()).padStart(2, '0')}/${String(cursor.getMonth() + 1).padStart(2, '0')}`;
+        data.push({ name, fullKey: key, Receitas: income, Despesas: expenses, Líquido: income - expenses });
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    } else if (bucketMode === 'week') {
+      const cursor = new Date(Number(rangeStartStr.slice(0, 4)), Number(rangeStartStr.slice(5, 7)) - 1, Number(rangeStartStr.slice(8, 10)));
+      const end = new Date(Number(rangeEndStr.slice(0, 4)), Number(rangeEndStr.slice(5, 7)) - 1, Number(rangeEndStr.slice(8, 10)));
+      while (cursor <= end) {
+        const monday = new Date(cursor);
+        monday.setDate(cursor.getDate() - ((cursor.getDay() + 6) % 7));
+        const weekStart = toDateKey(monday);
+        const weekEndDate = new Date(monday);
+        weekEndDate.setDate(monday.getDate() + 6);
+        const weekEndKey = toDateKey(weekEndDate);
+        const clampedEnd = weekEndKey < rangeEndStr ? weekEndKey : rangeEndStr;
+        const income = sumPaidInRange('Entrada', weekStart, clampedEnd);
+        const expenses = sumPaidInRange('Saída', weekStart, clampedEnd);
+        data.push({
+          name: `${String(monday.getDate()).padStart(2, '0')}/${String(monday.getMonth() + 1).padStart(2, '0')}`,
+          fullKey: weekStart,
+          Receitas: income,
+          Despesas: expenses,
+          Líquido: income - expenses,
+        });
+        cursor.setDate(monday.getDate() + 7);
+      }
+    } else {
+      const cursor = new Date(Number(rangeStartStr.slice(0, 4)), Number(rangeStartStr.slice(5, 7)) - 1, 1);
+      const end = new Date(Number(rangeEndStr.slice(0, 4)), Number(rangeEndStr.slice(5, 7)) - 1, 1);
+      while (cursor <= end) {
+        const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`;
+        const income = sumPaidByMonth('Entrada', key);
+        const expenses = sumPaidByMonth('Saída', key);
+        data.push({
+          name: MONTHS[cursor.getMonth()],
+          fullKey: `${key}-01`,
+          Receitas: income,
+          Despesas: expenses,
+          Líquido: income - expenses,
+          Meta: goalTargetForMonth(key),
+        });
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+    }
+    return data;
+  })();
 
   const paymentMethodData = (['PIX', 'Cartão de Crédito', 'Cartão de Débito', 'Boleto', 'Dinheiro', 'Transferência'] as const)
     .map((method) => ({ name: method, value: rangeSales.filter((s) => s.paymentMethod === method).length }))
@@ -474,7 +547,10 @@ export const DashboardView: React.FC = () => {
                 <BarChart2 className="w-5 h-5 text-purple-400" />
                 Desempenho Financeiro (Receitas x Despesas)
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">Evolução mensal de faturamento, custos operacionais e meta</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Faturamento e custos operacionais {bucketMode === 'day' ? 'por dia' : bucketMode === 'week' ? 'por semana' : 'por mês'} no período selecionado
+                {bucketMode === 'month' ? ' • linha tracejada: meta' : ''}
+              </p>
             </div>
 
             {/* Chart Type Selector */}
@@ -525,10 +601,14 @@ export const DashboardView: React.FC = () => {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#21262D" />
                   <XAxis dataKey="name" stroke="#8B949E" fontSize={11} />
-                  <YAxis stroke="#8B949E" fontSize={11} tickFormatter={(val) => `R$${val / 1000}k`} />
+                  <YAxis stroke="#8B949E" fontSize={11} tickFormatter={tickFormat} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#161B22', borderColor: '#30363D', borderRadius: '12px' }}
                     formatter={(val: any) => [formatBRL(Number(val)), '']}
+                    labelFormatter={(_: any, payload: any) => {
+                      const fk = payload?.[0]?.payload?.fullKey;
+                      return fk ? formatKeyDate(fk) : _;
+                    }}
                   />
                   <Legend />
                   <Area type="monotone" dataKey="Receitas" stroke="#22C55E" fillOpacity={1} fill="url(#colorReceita)" />
@@ -539,10 +619,14 @@ export const DashboardView: React.FC = () => {
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#21262D" />
                   <XAxis dataKey="name" stroke="#8B949E" fontSize={11} />
-                  <YAxis stroke="#8B949E" fontSize={11} tickFormatter={(val) => `R$${val / 1000}k`} />
+                  <YAxis stroke="#8B949E" fontSize={11} tickFormatter={tickFormat} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#161B22', borderColor: '#30363D', borderRadius: '12px' }}
                     formatter={(val: any) => [formatBRL(Number(val)), '']}
+                    labelFormatter={(_: any, payload: any) => {
+                      const fk = payload?.[0]?.payload?.fullKey;
+                      return fk ? formatKeyDate(fk) : _;
+                    }}
                   />
                   <Legend />
                   <Bar dataKey="Receitas" fill="#22C55E" radius={[6, 6, 0, 0]} />
@@ -553,10 +637,14 @@ export const DashboardView: React.FC = () => {
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#21262D" />
                   <XAxis dataKey="name" stroke="#8B949E" fontSize={11} />
-                  <YAxis stroke="#8B949E" fontSize={11} tickFormatter={(val) => `R$${val / 1000}k`} />
+                  <YAxis stroke="#8B949E" fontSize={11} tickFormatter={tickFormat} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#161B22', borderColor: '#30363D', borderRadius: '12px' }}
                     formatter={(val: any) => [formatBRL(Number(val)), '']}
+                    labelFormatter={(_: any, payload: any) => {
+                      const fk = payload?.[0]?.payload?.fullKey;
+                      return fk ? formatKeyDate(fk) : _;
+                    }}
                   />
                   <Legend />
                   <Line type="monotone" dataKey="Receitas" stroke="#22C55E" strokeWidth={3} />

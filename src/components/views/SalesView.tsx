@@ -47,6 +47,12 @@ export const SalesView: React.FC = () => {
   const [amountReceived, setAmountReceived] = useState<string>('');
   const [notes, setNotes] = useState('');
 
+  const nowLocal = new Date();
+  const todayStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(
+    nowLocal.getDate()
+  ).padStart(2, '0')}`;
+  const [saleDate, setSaleDate] = useState<string>(todayStr);
+
   // History Filter State
   const [historySearch, setHistorySearch] = useState('');
 
@@ -140,7 +146,7 @@ export const SalesView: React.FC = () => {
       sellerName: currentUser?.name,
       category: saleCategory,
       notes,
-    });
+    }, saleDate);
 
     // Reset PDV
     setCart([]);
@@ -148,6 +154,7 @@ export const SalesView: React.FC = () => {
     setShipping(0);
     setAmountReceived('');
     setNotes('');
+    setSaleDate(todayStr);
 
     // Open Receipt
     setSelectedSaleForReceipt(newSale);
@@ -309,6 +316,18 @@ export const SalesView: React.FC = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Select Sale Date */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1">Data da Venda</label>
+                <input
+                  type="date"
+                  required
+                  value={saleDate}
+                  onChange={(e) => setSaleDate(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#0D1117] border border-gray-800 text-white rounded-xl text-xs font-medium focus:outline-hidden focus:border-purple-500 [color-scheme:dark]"
+                />
               </div>
 
               {/* Select Revenue Category (Obrigatório) */}

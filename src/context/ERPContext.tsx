@@ -139,7 +139,7 @@ interface ERPContextType {
   monthProfitOf: (monthKey: string) => number;
 
   sales: Sale[];
-  addSale: (saleData: Omit<Sale, 'id' | 'code' | 'createdAt'>) => Sale;
+  addSale: (saleData: Omit<Sale, 'id' | 'code' | 'createdAt'>, saleDate?: string) => Sale;
   cancelSale: (id: string) => void;
 
   stockMovements: StockMovement[];
@@ -1204,14 +1204,18 @@ export const ERPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [proLaboreConfig.autoPay, proLaboreConfig.paymentDay]);
 
   // Sales (PDV / Order Execution)
-  const addSale = (saleData: Omit<Sale, 'id' | 'code' | 'createdAt'>): Sale => {
+  const addSale = (saleData: Omit<Sale, 'id' | 'code' | 'createdAt'>, saleDate?: string): Sale => {
     const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const createdAt = saleDate
+      ? `${saleDate}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+      : now.toISOString();
     const code = `VEN-${now.getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
     const newSale: Sale = {
       ...saleData,
       id: `sale_${Date.now()}`,
       code,
-      createdAt: now.toISOString(),
+      createdAt,
     };
 
     // 1. Add Sale
@@ -1237,7 +1241,7 @@ export const ERPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           previousStock,
           newStock,
           reason: `Venda ${code}`,
-          date: now.toISOString(),
+          date: createdAt,
           userName: currentUser?.name || 'Sistema',
         };
         setStockMovements((prev) => [mov, ...prev]);
@@ -1251,7 +1255,7 @@ export const ERPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const currentTotal = cust.totalSpent || 0;
         updateCustomer(newSale.customerId, {
           totalSpent: currentTotal + newSale.total,
-          lastPurchaseDate: now.toISOString(),
+          lastPurchaseDate: createdAt,
         });
       }
     }
@@ -1265,12 +1269,12 @@ export const ERPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       amount: newSale.total,
       paymentMethod: newSale.paymentMethod,
       bankAccount: 'acc_2',
-      date: now.toISOString().split('T')[0],
+      date: createdAt.split('T')[0],
       status: 'Pago',
       saleId: newSale.id,
       customerId: newSale.customerId,
       notes: `Venda contendo ${newSale.items.length} itens.`,
-      createdAt: now.toISOString(),
+      createdAt,
     };
     setTransactions((prev) => [financeTx, ...prev]);
 
