@@ -54,7 +54,7 @@ create index if not exists profiles_company_idx on public.profiles (company_id);
 
 create or replace function public.fn_company_id()
 returns uuid
-language sql stable
+language sql stable security definer
 set search_path = public
 as $$
   select p.company_id
@@ -64,7 +64,7 @@ $$;
 
 create or replace function public.fn_is_admin()
 returns boolean
-language sql stable
+language sql stable security definer
 set search_path = public
 as $$
   select coalesce((p.role = 'Administrador'), false)
