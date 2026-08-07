@@ -223,7 +223,7 @@ export const ProLaboreView: React.FC = () => {
 
           <div>
             <label className="block text-xs font-semibold text-gray-300 mb-1">Conta Bancária</label>
-            <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
               <select
                 value={form.bankAccount}
                 onChange={(e) => setForm({ ...form, bankAccount: e.target.value })}

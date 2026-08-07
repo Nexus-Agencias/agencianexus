@@ -401,7 +401,7 @@ export const HealthView: React.FC = () => {
             ))}
           </div>
         </div>
-        <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-gray-800 text-[11px] text-gray-400">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:gap-6 mt-4 pt-4 border-t border-gray-800 text-[11px] text-gray-400">
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Líquido positivo
           </span>

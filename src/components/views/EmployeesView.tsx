@@ -115,7 +115,7 @@ export const EmployeesView: React.FC = () => {
             Gestão de colaboradores, salários, benefícios, comissões e folha de pagamento.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="bg-[#161B22] border border-gray-800 rounded-2xl px-4 py-2.5 text-right">
             <div className="text-[10px] text-gray-400 font-semibold uppercase">Folha Mensal (Ativos)</div>
             <div className="text-sm font-extrabold text-rose-300">{formatBRL(totalPayroll)}</div>

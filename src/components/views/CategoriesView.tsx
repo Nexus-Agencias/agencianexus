@@ -155,19 +155,24 @@ export const CategoriesView: React.FC = () => {
         </h2>
         <div className="space-y-3">
           {stats.map((s) => (
-            <div key={s.category} className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: CATEGORY_COLORS[s.category] }} />
-              <span className="w-48 text-xs font-semibold text-gray-300 truncate">{s.category}</span>
-              <div className="flex-1 h-6 bg-[#0D1117] rounded-lg overflow-hidden">
-                <div
-                  className="h-full rounded-lg transition-all"
-                  style={{
-                    width: `${Math.max(2, (s.revenue / maxRevenue) * 100)}%`,
-                    backgroundColor: CATEGORY_COLORS[s.category],
-                  }}
-                />
+            <div key={s.category} className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: CATEGORY_COLORS[s.category] }} />
+                <span className="w-48 max-w-[60vw] text-xs font-semibold text-gray-300 truncate">{s.category}</span>
+                <span className="ml-auto sm:hidden text-xs font-extrabold text-white">{formatBRL(s.revenue)}</span>
               </div>
-              <span className="w-28 text-right text-xs font-extrabold text-white">{formatBRL(s.revenue)}</span>
+              <div className="flex flex-1 items-center gap-3 min-w-0">
+                <div className="flex-1 h-6 bg-[#0D1117] rounded-lg overflow-hidden">
+                  <div
+                    className="h-full rounded-lg transition-all"
+                    style={{
+                      width: `${Math.max(2, (s.revenue / maxRevenue) * 100)}%`,
+                      backgroundColor: CATEGORY_COLORS[s.category],
+                    }}
+                  />
+                </div>
+                <span className="hidden sm:block w-28 text-right text-xs font-extrabold text-white">{formatBRL(s.revenue)}</span>
+              </div>
             </div>
           ))}
         </div>

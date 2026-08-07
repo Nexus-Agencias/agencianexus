@@ -182,7 +182,7 @@ export const SalesView: React.FC = () => {
         </div>
 
         {/* Tab switcher */}
-        <div className="flex items-center gap-1 bg-[#161B22] p-1 rounded-2xl border border-gray-800">
+        <div className="flex flex-wrap items-center gap-1 bg-[#161B22] p-1 rounded-2xl border border-gray-800">
           <button
             onClick={() => setActiveTab('pdv')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${

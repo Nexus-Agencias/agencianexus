@@ -117,7 +117,7 @@ export const SettingsView: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-300 mb-1">Cidade</label>
               <input

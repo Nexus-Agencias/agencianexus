@@ -146,7 +146,7 @@ export const ProfileView: React.FC = () => {
                 Envie para sua equipe: eles criam o acesso com esse código e entram no mesmo sistema.
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="px-4 py-2 bg-[#0D1117] border border-purple-500/30 rounded-xl text-lg font-extrabold tracking-[0.3em] text-white font-mono">
                 {companyCode}
               </span>

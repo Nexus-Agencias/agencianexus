@@ -217,7 +217,7 @@ export const ReportsView: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 no-print">
+        <div className="flex flex-wrap items-center justify-end gap-2 no-print">
           <button
             onClick={handleExportCSV}
             className="flex items-center gap-1.5 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold rounded-xl transition-all"
@@ -262,9 +262,9 @@ export const ReportsView: React.FC = () => {
       </div>
 
       {/* Printable Report Canvas */}
-      <div className="bg-[#161B22] border border-gray-800 rounded-3xl p-8 shadow-2xl print-area space-y-6">
+      <div className="bg-[#161B22] border border-gray-800 rounded-3xl p-4 sm:p-8 shadow-2xl print-area space-y-6">
         {/* Report Header */}
-        <div className="flex justify-between items-center pb-6 border-b border-gray-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-6 border-b border-gray-800">
           <div>
             <h2 className="text-xl font-bold text-white tracking-wide">{companyConfig.name}</h2>
             <p className="text-xs text-purple-400 mt-1 font-semibold">
@@ -272,7 +272,7 @@ export const ReportsView: React.FC = () => {
               {new Date().toLocaleDateString('pt-BR')}
             </p>
           </div>
-          <div className="text-right text-xs text-gray-400">
+          <div className="text-left sm:text-right text-xs text-gray-400">
             <p>CNPJ: {companyConfig.cnpj}</p>
             <p>
               {companyConfig.city}/{companyConfig.state}
