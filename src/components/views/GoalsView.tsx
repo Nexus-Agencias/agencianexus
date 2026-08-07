@@ -5,7 +5,7 @@ import { Target, Trophy, Award, TrendingUp, Plus, Edit, Trash2, X, Sparkles } fr
 import { formatBRL, formatDate } from '../../utils/formatters';
 
 export const GoalsView: React.FC = () => {
-  const { goals, addGoal, updateGoal, deleteGoal, ranking, addRanking, updateRanking, deleteRanking } = useERP();
+  const { goals, addGoal, updateGoal, deleteGoal, ranking, addRanking, updateRanking, deleteRanking, transactions } = useERP();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -20,6 +20,15 @@ export const GoalsView: React.FC = () => {
   const [rankAmount, setRankAmount] = useState('');
 
   const sortedRanking = ranking.slice().sort((a, b) => b.amount - a.amount);
+
+  const achievedForGoal = (goal: Goal) => {
+    if (goal.startDate && goal.endDate) {
+      return transactions
+        .filter((t) => t.type === 'Entrada' && t.status === 'Pago' && t.date >= goal.startDate && t.date <= goal.endDate)
+        .reduce((acc, t) => acc + t.amount, 0);
+    }
+    return goal.currentAmount || 0;
+  };
 
   const openRankingCreateModal = () => {
     setRankingEditingId(null);
@@ -130,7 +139,8 @@ export const GoalsView: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {goals.map((goal) => {
-          const pct = Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100));
+          const achieved = achievedForGoal(goal);
+          const pct = goal.targetAmount > 0 ? Math.min(100, Math.round((achieved / goal.targetAmount) * 100)) : 0;
           const isAchieved = pct >= 100;
 
           return (
@@ -164,7 +174,7 @@ export const GoalsView: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-bold">
                   <span className="text-gray-300">
-                    Atingido: <span className="text-emerald-400">{formatBRL(goal.currentAmount)}</span>
+                    Atingido: <span className="text-emerald-400">{formatBRL(achieved)}</span>
                   </span>
                   <span className="text-purple-300">{pct}%</span>
                 </div>
